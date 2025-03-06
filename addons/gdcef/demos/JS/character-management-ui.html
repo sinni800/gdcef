@@ -30,7 +30,23 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 20px;
             width: 100%;
-            max-width: 500px;
+            max-width: 900px;
+            /* Augmenter la largeur pour accommoder 2 colonnes */
+        }
+
+        .two-column-layout {
+            display: flex;
+            gap: 20px;
+        }
+
+        .left-column {
+            flex: 1;
+        }
+
+        .right-column {
+            flex: 1;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 20px;
         }
 
         .character-header {
@@ -110,6 +126,43 @@
             color: #2ecc71;
             font-size: 0.9em;
         }
+
+        /* Styles améliorés pour la colonne de droite */
+        .right-column .character-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .right-column .section-title {
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 8px;
+        }
+
+        .stats-container {
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .stat-row {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-value {
+            color: var(--secondary-color);
+        }
     </style>
 </head>
 
@@ -119,53 +172,91 @@
             <h1>Character Management UI</h1>
         </div>
 
-        <div class="character-section">
-            <h2 class="section-title">Name of the character</h2>
-            <div class="character-name-form">
-                <input type="text" id="characterNameInput" placeholder="Enter the character name" class="xp-input">
-                <button onclick="setCharacterName()" class="weapon-button">Set Name</button>
-            </div>
-        </div>
-
-        <div class="character-section">
-            <h2 class="section-title">Weapon Selection</h2>
-            <div class="weapon-grid">
-                <button onclick="selectWeapon('sword')" class="weapon-button" id="weapon-sword">Sword</button>
-                <button onclick="selectWeapon('bow')" class="weapon-button" id="weapon-bow">Bow</button>
-                <button onclick="selectWeapon('axe')" class="weapon-button" id="weapon-axe">Axe</button>
-                <button onclick="selectWeapon('spear')" class="weapon-button" id="weapon-spear">Spear</button>
-                <button onclick="selectWeapon('staff')" class="weapon-button" id="weapon-staff">Staff</button>
-                <button onclick="selectWeapon('dagger')" class="weapon-button" id="weapon-dagger">Dagger</button>
-            </div>
-        </div>
-
-        <div class="character-section">
-            <h2 class="section-title">XP Management</h2>
-            <div class="xp-controls">
-                <input type="number" id="xpInput" placeholder="Number of XP" class="xp-input">
-                <button onclick="addXP()" class="weapon-button">Add XP</button>
-                <button onclick="removeXP()" class="weapon-button">Remove XP</button>
-            </div>
-        </div>
-
-        <div class="character-section">
-            <h2 class="section-title">Character Stats</h2>
-            <div class="stats-container">
-                <div class="stat-row">
-                    <span class="stat-label">Name:</span>
-                    <span id="statName" class="stat-value">-</span>
+        <div class="two-column-layout">
+            <!-- Colonne de gauche -->
+            <div class="left-column">
+                <div class="character-section">
+                    <h2 class="section-title">Name of the character</h2>
+                    <div class="character-name-form">
+                        <input type="text" id="characterNameInput" placeholder="Enter the character name"
+                            class="xp-input">
+                        <button onclick="setCharacterName()" class="weapon-button">Set Name</button>
+                    </div>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">Weapon:</span>
-                    <span id="statWeapon" class="stat-value">-</span>
+
+                <div class="character-section">
+                    <h2 class="section-title">Weapon Selection</h2>
+                    <div class="weapon-grid">
+                        <button onclick="selectWeapon('sword')" class="weapon-button" id="weapon-sword">Sword</button>
+                        <button onclick="selectWeapon('bow')" class="weapon-button" id="weapon-bow">Bow</button>
+                        <button onclick="selectWeapon('axe')" class="weapon-button" id="weapon-axe">Axe</button>
+                        <button onclick="selectWeapon('spear')" class="weapon-button" id="weapon-spear">Spear</button>
+                        <button onclick="selectWeapon('staff')" class="weapon-button" id="weapon-staff">Staff</button>
+                        <button onclick="selectWeapon('dagger')" class="weapon-button"
+                            id="weapon-dagger">Dagger</button>
+                    </div>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">XP:</span>
-                    <span id="statXP" class="stat-value">-</span>
+
+                <div class="character-section">
+                    <h2 class="section-title">Advanced Weapon Configuration</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button onclick="sendComplexWeaponData()" class="weapon-button">Send Complex Weapon
+                            Data</button>
+                        <button onclick="sendWeaponArray()" class="weapon-button">Send Weapon Array</button>
+                    </div>
+                    <div id="complexDataResult" style="font-size: 0.9em; color: #3498db; margin-top: 5px;"></div>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">Level:</span>
-                    <span id="statLevel" class="stat-value">-</span>
+
+                <div class="character-section">
+                    <h2 class="section-title">XP Management</h2>
+                    <div class="xp-controls">
+                        <input type="number" id="xpInput" placeholder="Number of XP" class="xp-input">
+                        <button onclick="addXP()" class="weapon-button">Add XP</button>
+                        <button onclick="removeXP()" class="weapon-button">Remove XP</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne de droite -->
+            <div class="right-column">
+                <div class="character-section">
+                    <h2 class="section-title">Character Stats</h2>
+                    <div class="stats-container">
+                        <div class="stat-row">
+                            <span class="stat-label">Name:</span>
+                            <span id="statName" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Weapon:</span>
+                            <span id="statWeapon" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">XP:</span>
+                            <span id="statXP" class="stat-value">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Level:</span>
+                            <span id="statLevel" class="stat-value">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="weaponDetails" style="margin-top: 15px; display: none;">
+                    <h3
+                        style="font-size: 1.2em; color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid var(--secondary-color); padding-bottom: 5px;">
+                        Weapon Details</h3>
+                    <div id="weaponDetailsContent"
+                        style="background-color: white; padding: 12px; border-radius: 5px; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
+                    </div>
+                </div>
+
+                <div id="inventorySection" style="margin-top: 15px; display: none;">
+                    <h3
+                        style="font-size: 1.2em; color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid var(--secondary-color); padding-bottom: 5px;">
+                        Inventory</h3>
+                    <div id="inventoryContent"
+                        style="background-color: white; padding: 12px; border-radius: 5px; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
+                    </div>
                 </div>
             </div>
         </div>
@@ -193,6 +284,57 @@
             if (!fromGodot && window.godot && window.godot.change_weapon) {
                 window.godot.change_weapon(weapon);
                 updateStatus(`Weapon changed to : ${weapon}`);
+            }
+        }
+
+        function sendComplexWeaponData() {
+            // Création d'un objet complexe représentant une arme
+            const weaponData = {
+                id: Math.floor(Math.random() * 1000),
+                name: currentWeapon || 'sword',
+                properties: {
+                    damage: Math.floor(Math.random() * 100) + 10,
+                    durability: Math.floor(Math.random() * 90) + 10,
+                    magicEffects: ["fire", "ice", "lightning"]
+                },
+                rarity: "legendary",
+                equipped: true,
+                stats: {
+                    strength: Math.floor(Math.random() * 20) + 5,
+                    agility: Math.floor(Math.random() * 15),
+                    intelligence: Math.floor(Math.random() * 25)
+                }
+            };
+
+            // Afficher les données dans l'interface
+            document.getElementById('complexDataResult').textContent =
+                `Sending weapon: ${weaponData.name} (ID: ${weaponData.id}, Damage: ${weaponData.properties.damage})`;
+
+            // Envoyer l'objet complexe à Godot
+            if (window.godot && window.godot.update_weapon_details) {
+                window.godot.update_weapon_details(weaponData);
+                updateStatus(`Complex weapon data sent to Godot!`);
+            }
+        }
+
+        function sendWeaponArray() {
+            // Création d'un tableau d'armes
+            const weaponInventory = [
+                { id: 1, name: "Sword of Truth", damage: 75 },
+                { id: 2, name: "Magic Bow", damage: 45 },
+                { id: 3, name: "Battle Axe", damage: 90 },
+                { id: 4, name: "Ancient Staff", damage: 60 },
+                { id: 5, name: "Shadow Dagger", damage: 50 }
+            ];
+
+            // Afficher les données dans l'interface
+            document.getElementById('complexDataResult').textContent =
+                `Sending inventory with ${weaponInventory.length} weapons`;
+
+            // Envoyer le tableau à Godot
+            if (window.godot && window.godot.update_inventory) {
+                window.godot.update_inventory(weaponInventory);
+                updateStatus(`Weapon inventory sent to Godot!`);
             }
         }
 
@@ -271,10 +413,92 @@
                 if (data.xp !== undefined) {
                     characterXP = data.xp;
                     document.getElementById('statXP').textContent = data.xp;
-                    const level = Math.floor(data.xp / 100) + 1;
-                    document.getElementById('statLevel').textContent = level;
-                    updateStatus(`XP updated: ${characterXP}`);
+                    document.getElementById('statLevel').textContent = data.level || Math.floor(data.xp / 100) + 1;
                 }
+
+                // Afficher les détails de l'arme s'ils sont disponibles
+                const weaponDetailsSection = document.getElementById('weaponDetails');
+                const weaponDetailsContent = document.getElementById('weaponDetailsContent');
+
+                if (data.weaponDetails && Object.keys(data.weaponDetails).length > 0) {
+                    weaponDetailsSection.style.display = 'block';
+
+                    // Créer une représentation HTML des détails de l'arme
+                    let detailsHTML = '<ul style="margin: 0; padding-left: 20px;">';
+
+                    if (data.weaponDetails.id) {
+                        detailsHTML += `<li><strong>ID:</strong> ${data.weaponDetails.id}</li>`;
+                    }
+
+                    if (data.weaponDetails.rarity) {
+                        detailsHTML += `<li><strong>Rarity:</strong> ${data.weaponDetails.rarity}</li>`;
+                    }
+
+                    if (data.weaponDetails.properties) {
+                        const props = data.weaponDetails.properties;
+                        detailsHTML += '<li><strong>Properties:</strong><ul style="padding-left: 20px;">';
+
+                        if (props.damage !== undefined) {
+                            detailsHTML += `<li>Damage: ${props.damage}</li>`;
+                        }
+
+                        if (props.durability !== undefined) {
+                            detailsHTML += `<li>Durability: ${props.durability}</li>`;
+                        }
+
+                        if (props.magicEffects && props.magicEffects.length) {
+                            detailsHTML += `<li>Magic Effects: ${props.magicEffects.join(', ')}</li>`;
+                        }
+
+                        detailsHTML += '</ul></li>';
+                    }
+
+                    if (data.weaponDetails.stats) {
+                        const stats = data.weaponDetails.stats;
+                        detailsHTML += '<li><strong>Stats Bonus:</strong><ul style="padding-left: 20px;">';
+
+                        for (const [key, value] of Object.entries(stats)) {
+                            detailsHTML += `<li>${key.charAt(0).toUpperCase() + key.slice(1)}: +${value}</li>`;
+                        }
+
+                        detailsHTML += '</ul></li>';
+                    }
+
+                    detailsHTML += '</ul>';
+                    weaponDetailsContent.innerHTML = detailsHTML;
+                } else {
+                    weaponDetailsSection.style.display = 'none';
+                }
+
+                // Afficher l'inventaire s'il est disponible
+                const inventorySection = document.getElementById('inventorySection');
+                const inventoryContent = document.getElementById('inventoryContent');
+
+                if (data.inventory && data.inventory.length > 0) {
+                    inventorySection.style.display = 'block';
+
+                    // Créer une représentation HTML de l'inventaire
+                    let inventoryHTML = '<table style="width: 100%; border-collapse: collapse;">';
+                    inventoryHTML += '<thead><tr style="background-color: #e0e0e0;">' +
+                        '<th style="text-align: left; padding: 5px;">Name</th>' +
+                        '<th style="text-align: center; padding: 5px;">ID</th>' +
+                        '<th style="text-align: right; padding: 5px;">Damage</th>' +
+                        '</tr></thead><tbody>';
+
+                    data.inventory.forEach(item => {
+                        inventoryHTML += `<tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 5px;">${item.name || 'Unknown'}</td>
+                            <td style="text-align: center; padding: 5px;">${item.id || '?'}</td>
+                            <td style="text-align: right; padding: 5px;">${item.damage || 0}</td>
+                        </tr>`;
+                    });
+
+                    inventoryHTML += '</tbody></table>';
+                    inventoryContent.innerHTML = inventoryHTML;
+                } else {
+                    inventorySection.style.display = 'none';
+                }
+
             } catch (e) {
                 console.error('[GodotEventSystem] Error processing update:', e);
             }

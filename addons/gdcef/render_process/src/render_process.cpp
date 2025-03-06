@@ -84,30 +84,46 @@ bool GodotMethodHandler::Execute(const CefString& name,
     // Add the method name as first argument.
     args->SetString(0, arguments[0]->GetStringValue());
 
-    // Add the arguments directly from V8 types.
+    // Convert all arguments to JSON format
     for (size_t i = 1; i < arguments.size(); ++i)
     {
         auto arg = arguments[i];
-        if (arg->IsBool())
+
+        // Use the JSON.stringify method for all types
+        CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+        CefRefPtr<CefV8Value> global = context->GetGlobal();
+        CefRefPtr<CefV8Value> json = global->GetValue("JSON");
+
+        if (json.get() && json->IsObject())
         {
-            args->SetBool(i, arg->GetBoolValue());
-        }
-        else if (arg->IsInt())
-        {
-            args->SetInt(i, arg->GetIntValue());
-        }
-        else if (arg->IsDouble())
-        {
-            args->SetDouble(i, arg->GetDoubleValue());
-        }
-        else if (arg->IsString())
-        {
-            args->SetString(i, arg->GetStringValue());
+            CefRefPtr<CefV8Value> stringify = json->GetValue("stringify");
+            if (stringify.get() && stringify->IsFunction())
+            {
+                CefV8ValueList stringifyArgs;
+                stringifyArgs.push_back(arg);
+
+                CefRefPtr<CefV8Value> jsonString =
+                    stringify->ExecuteFunction(nullptr, stringifyArgs);
+                if (jsonString.get() && jsonString->IsString())
+                {
+                    args->SetString(i, jsonString->GetStringValue());
+                }
+                else
+                {
+                    // Fallback in case of stringify failure
+                    args->SetString(i,
+                                    "{\"error\": \"JSON stringify failed\"}");
+                }
+            }
+            else
+            {
+                args->SetString(
+                    i, "{\"error\": \"JSON.stringify not available\"}");
+            }
         }
         else
         {
-            // For other types, convert them to string
-            args->SetString(i, arg->GetStringValue());
+            args->SetString(i, "{\"error\": \"JSON object not available\"}");
         }
     }
 

@@ -63,7 +63,7 @@
 #endif
 
 // *****************************************************************************
-//! \brief JavaScript Method Handler
+//! \brief JavaScript Method Handler. Handle V8 function calls.
 // *****************************************************************************
 class GodotMethodHandler: public CefV8Handler
 {

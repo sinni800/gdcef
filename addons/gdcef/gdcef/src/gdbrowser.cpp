@@ -27,6 +27,7 @@
 #include "godot_js_binder.hpp"
 #include "helper_config.hpp"
 #include "helper_files.hpp"
+#include <godot_cpp/classes/json.hpp>
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/class_db.hpp>
@@ -967,26 +968,95 @@ bool GDBrowserView::onProcessMessageReceived(
     auto message_args = message->GetArgumentList();
     for (size_t i = 1; i < message_args->GetSize(); ++i)
     {
-        switch (message_args->GetType(i))
+        if (message_args->GetType(i) == VTYPE_STRING)
         {
-            case VTYPE_BOOL:
-                args.push_back(message_args->GetBool(i));
-                break;
-            case VTYPE_INT:
-                args.push_back(message_args->GetInt(i));
-                break;
-            case VTYPE_DOUBLE:
-                args.push_back(message_args->GetDouble(i));
-                break;
-            case VTYPE_STRING:
-                args.push_back(godot::String(
-                    message_args->GetString(i).ToString().c_str()));
-                break;
-            default:
-                // For unsupported types, pass as string
-                args.push_back(godot::String(
-                    message_args->GetString(i).ToString().c_str()));
-                break;
+            godot::String json_str(
+                message_args->GetString(i).ToString().c_str());
+
+            // Check if this is a JSON error message
+            if (json_str.begins_with("{\"error\":"))
+            {
+                std::stringstream ss;
+                ss << "JSON error: " << json_str.utf8().get_data();
+                BROWSER_ERROR(ss.str());
+                args.push_back(godot::String(""));
+                continue;
+            }
+
+            // For JSON objects and arrays
+            if ((json_str.begins_with("{") && json_str.ends_with("}")) ||
+                (json_str.begins_with("[") && json_str.ends_with("]")))
+            {
+                // Use directly the JSON class
+                godot::Variant parse_result =
+                    godot::JSON::parse_string(json_str);
+
+                // Check if the parsing has succeeded (parse_string returns null
+                // in case of error)
+                if (parse_result.get_type() != godot::Variant::NIL)
+                {
+                    args.push_back(parse_result);
+                    continue;
+                }
+                else
+                {
+                    std::stringstream ss;
+                    ss << "JSON parsing failed for: "
+                       << json_str.utf8().get_data();
+                    BROWSER_ERROR(ss.str());
+                }
+            }
+
+            // For simple types (string, number, boolean, null)
+            if (json_str.begins_with("\"") && json_str.ends_with("\"") &&
+                json_str.length() > 1)
+            {
+                // This is a JSON string, remove the quotes
+                godot::String unquoted =
+                    json_str.substr(1, json_str.length() - 2);
+                args.push_back(unquoted);
+            }
+            else if (json_str.is_valid_float())
+            {
+                // This is a number
+                args.push_back(json_str.to_float());
+            }
+            else if (json_str == "true")
+            {
+                args.push_back(true);
+            }
+            else if (json_str == "false")
+            {
+                args.push_back(false);
+            }
+            else if (json_str == "null")
+            {
+                args.push_back(godot::Variant());
+            }
+            else
+            {
+                // Otherwise, keep as string
+                args.push_back(json_str);
+            }
+        }
+        else
+        {
+            // Process non-JSON messages (improbable case)
+            switch (message_args->GetType(i))
+            {
+                case VTYPE_BOOL:
+                    args.push_back(message_args->GetBool(i));
+                    break;
+                case VTYPE_INT:
+                    args.push_back(message_args->GetInt(i));
+                    break;
+                case VTYPE_DOUBLE:
+                    args.push_back(message_args->GetDouble(i));
+                    break;
+                default:
+                    args.push_back(godot::String("(unsupported type)"));
+                    break;
+            }
         }
     }
 

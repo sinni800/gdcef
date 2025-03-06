@@ -1,5 +1,11 @@
 # ==============================================================================
 # Basic application made in HTML/JS/CSS with interaction with Godot.
+#
+# This demo is a simple character management system. The user can change the
+# character's name, weapon, and XP. The character's stats are displayed in the
+# HTML page. When the user clicks on a button, the JS code is called and the
+# Godot script is notified. The Godot script updates the character's stats and
+# sends them back to the HTML page.
 # ==============================================================================
 extends Control
 
@@ -16,43 +22,36 @@ const BROWSER_NAME = "player_stats"
 @onready var weapon: String = "sword"
 @onready var xp: int = 0
 @onready var level: int = 1
+@onready var weapon_details: Dictionary = {}
+@onready var inventory: Array = []
 
 # ==============================================================================
-# Initial character configuration
+# Initialize CEF and create the GUI as HTML/JS/CSS page.
 # ==============================================================================
 func _ready():
 	initialize_cef()
 	pass
 
 # ==============================================================================
-# Change character's weapon
+# JS callback: Change character's weapon.
 # ==============================================================================
 func change_weapon(new_weapon: String):
 	print("Weapon changed to: ", new_weapon)
 	weapon = new_weapon
-	_update_character_stats()
+	_refresh_page_character_stats()
 	pass
 
 # ==============================================================================
-# Set character's name
+# JS callback: Set character's name.
 # ==============================================================================
 func set_character_name(new_name: String):
 	print("New name: ", new_name)
 	player_name = new_name
-	_update_character_stats()
+	_refresh_page_character_stats()
 	pass
 
 # ==============================================================================
-# Modify XP (can be positive or negative)
-# ==============================================================================
-func modify_xp(xp_change: int):
-	xp += xp_change
-	_level_up_check()
-	_update_character_stats()
-	pass
-
-# ==============================================================================
-# Check for level up
+# Check for level up.
 # ==============================================================================
 func _level_up_check():
 	var previous_level = level
@@ -62,18 +61,61 @@ func _level_up_check():
 		print("Level up! New level: ", level)
 	pass
 
+
 # ==============================================================================
-# Update character statistics
+# JS callback: Modify XP (can be positive or negative).
 # ==============================================================================
-func _update_character_stats():
-	var character_info = {
-		"name": player_name,
-		"weapon": weapon,
-		"xp": xp,
-		"level": level
-	}
-	print("Character update: ", character_info)
-	# Refresh the GUI
+func modify_xp(xp_change: int):
+	xp += xp_change
+	_level_up_check()
+	_refresh_page_character_stats()
+	pass
+
+# ==============================================================================
+# JS callback: Update weapon details with complex data.
+# ==============================================================================
+func update_weapon_details(data: Dictionary):
+	print("Received complex weapon data: ", data)
+	weapon_details = data
+
+	# Update base weapon
+	if data.has("name"):
+		weapon = data["name"]
+
+	# Display information on the console
+	if data.has("properties") and data["properties"] is Dictionary:
+		var props = data["properties"]
+		if props.has("damage"):
+			print("Weapon damage: ", props["damage"])
+		if props.has("magicEffects") and props["magicEffects"] is Array:
+			print("Magic effects: ", props["magicEffects"])
+
+	_refresh_page_character_stats()
+	pass
+
+# ==============================================================================
+# JS callback: Update inventory with array of weapons.
+# ==============================================================================
+func update_inventory(weapons_array: Array):
+	print("Received weapon inventory: ", weapons_array)
+	inventory = weapons_array
+
+	# Display information on the console
+	var total_damage = 0
+	for weapon_item in weapons_array:
+		if weapon_item is Dictionary and weapon_item.has("damage"):
+			total_damage += weapon_item["damage"]
+
+	print("Total inventory damage potential: ", total_damage)
+
+	# Update the statistics
+	_refresh_page_character_stats()
+	pass
+
+# ==============================================================================
+# Refresh the HTML page with the new character statistics.
+# ==============================================================================
+func _refresh_page_character_stats():
 	$CEF.get_node(BROWSER_NAME).send_to_js("character_update", get_character_state())
 	pass
 
@@ -81,12 +123,23 @@ func _update_character_stats():
 # Optional method to get complete character state
 # ==============================================================================
 func get_character_state() -> Dictionary:
-	return {
+	var character_info = {
 		"name": player_name,
 		"weapon": weapon,
 		"xp": xp,
 		"level": level
 	}
+
+	# Add weapon details if available
+	if not weapon_details.is_empty():
+		character_info["weaponDetails"] = weapon_details
+
+	# Add inventory if it's not empty
+	if not inventory.is_empty():
+		character_info["inventory"] = inventory
+
+	print("Character update: ", character_info)
+	return character_info
 
 # ==============================================================================
 # CEF Callback when a page has ended to load with success.
@@ -94,12 +147,14 @@ func get_character_state() -> Dictionary:
 func _on_page_loaded(browser):
 	print("The browser " + browser.name + " has loaded " + browser.get_url())
 
-	# Register methods for JS->Godot communication
+	# Register methods for JS ==> Godot communication
 	browser.register_method(Callable(self, "change_weapon"))
 	browser.register_method(Callable(self, "set_character_name"))
 	browser.register_method(Callable(self, "modify_xp"))
+	browser.register_method(Callable(self, "update_weapon_details"))
+	browser.register_method(Callable(self, "update_inventory"))
 
-	# Send initial character state to JS
+	# Send initial character state to the HTML page
 	browser.send_to_js("character_update", get_character_state())
 	pass
 
@@ -119,9 +174,7 @@ func _on_page_failed_loading(_err_code, _err_msg, browser):
 # two separate textures.
 # ==============================================================================
 func initialize_cef():
-
-	### CEF
-
+	# CEF initialization
 	if !$CEF.initialize({
 			"incognito": true,
 			"remote_debugging_port": 7777,
@@ -133,8 +186,7 @@ func initialize_cef():
 		push_warning("CEF version: " + $CEF.get_full_version())
 		pass
 
-	### Browser
-
+	# Browser creation: load the local HTML page that will be used as a GUI.
 	var browser = $CEF.create_browser("res://character-management-ui.html",
 		$TextureRect, {"javascript": true})
 	browser.name = BROWSER_NAME
