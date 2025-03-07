@@ -84,46 +84,46 @@ bool GodotMethodHandler::Execute(const CefString& name,
     // Add the method name as first argument.
     args->SetString(0, arguments[0]->GetStringValue());
 
+    // Use the JSON.stringify method for all types
+    CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+    CefRefPtr<CefV8Value> global = context->GetGlobal();
+    CefRefPtr<CefV8Value> json = global->GetValue("JSON");
+    CefRefPtr<CefV8Value> stringify;
+
+    bool stringifyOk = false;
+
+    if (json.get() && json->IsObject())
+    {
+        stringify = json->GetValue("stringify");
+        if (stringify.get() && stringify->IsFunction())
+        {
+            stringifyOk = true;
+        }
+    }
+
     // Convert all arguments to JSON format
     for (size_t i = 1; i < arguments.size(); ++i)
     {
-        auto arg = arguments[i];
-
-        // Use the JSON.stringify method for all types
-        CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
-        CefRefPtr<CefV8Value> global = context->GetGlobal();
-        CefRefPtr<CefV8Value> json = global->GetValue("JSON");
-
-        if (json.get() && json->IsObject())
+        if (!stringifyOk)
         {
-            CefRefPtr<CefV8Value> stringify = json->GetValue("stringify");
-            if (stringify.get() && stringify->IsFunction())
-            {
-                CefV8ValueList stringifyArgs;
-                stringifyArgs.push_back(arg);
+            args->SetString(i, "{\"error\": \"JSON.stringify not available\"}");
+            continue;
+        }
 
-                CefRefPtr<CefV8Value> jsonString =
-                    stringify->ExecuteFunction(nullptr, stringifyArgs);
-                if (jsonString.get() && jsonString->IsString())
-                {
-                    args->SetString(i, jsonString->GetStringValue());
-                }
-                else
-                {
-                    // Fallback in case of stringify failure
-                    args->SetString(i,
-                                    "{\"error\": \"JSON stringify failed\"}");
-                }
-            }
-            else
-            {
-                args->SetString(
-                    i, "{\"error\": \"JSON.stringify not available\"}");
-            }
+        auto arg = arguments[i];
+        CefV8ValueList stringifyArgs;
+        stringifyArgs.push_back(arg);
+
+        CefRefPtr<CefV8Value> jsonString =
+            stringify->ExecuteFunction(nullptr, stringifyArgs);
+        if (jsonString.get() && jsonString->IsString())
+        {
+            args->SetString(i, jsonString->GetStringValue());
         }
         else
         {
-            args->SetString(i, "{\"error\": \"JSON object not available\"}");
+            // Fallback in case of stringify failure
+            args->SetString(i, "{\"error\": \"JSON stringify failed\"}");
         }
     }
 
